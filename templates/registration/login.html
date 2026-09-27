@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+
+{% block title %}Iniciar Sesión - E-Comm Multi-tenant{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center mt-5">
+    <div class="col-md-5">
+        <div class="card shadow-sm p-4 border-0 rounded-3 bg-white">
+            <h3 class="text-center fw-bold mb-4 text-dark">Iniciar Sesión</h3>
+            
+            <form method="post">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label for="id_username" class="form-label fw-semibold">Nombre de usuario</label>
+                    <input type="text" name="username" autofocus autocomplete="username" required id="id_username" class="form-control">
+                </div>
+                <div class="mb-3">
+                    <label for="id_password" class="form-label fw-semibold">Contraseña</label>
+                    <input type="password" name="password" autocomplete="current-password" required id="id_password" class="form-control">
+                </div>
+                <button type="submit" class="btn btn-dark w-100 fw-semibold py-2">Entrar al Sistema</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

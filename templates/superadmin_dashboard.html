@@ -1,0 +1,232 @@
+{% extends 'base.html' %}
+
+{% block title %}Panel Superadmin - Multi-tenant{% endblock %}
+
+{% block content %}
+<style>
+    :root {
+        --admin-bg: #f1f5f9;
+        --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    }
+    body {
+        background-color: var(--admin-bg);
+    }
+    .dashboard-header {
+        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+        color: white;
+        border-radius: 12px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: var(--card-shadow);
+    }
+    .card-dashboard {
+        border: none;
+        border-radius: 10px;
+        box-shadow: var(--card-shadow);
+        background: white;
+        margin-bottom: 1.5rem;
+    }
+    .table-container {
+        max-height: 400px;
+        overflow-y: auto;
+    }
+    .badge-role {
+        font-size: 0.8rem;
+        padding: 0.4em 0.8em;
+    }
+</style>
+
+<div class="container py-4">
+    <!-- Header -->
+    <div class="dashboard-header d-flex justify-content-between align-items-center">
+        <div>
+            <h1 class="h3 fw-bold mb-1">Panel de Control General</h1>
+            <p class="text-muted mb-0 text-light opacity-75">Bienvenido, {{ request.user.username }}. Gestiona tiendas, administradores y usuarios.</p>
+        </div>
+        <div>
+            <a href="{% url 'logout' %}" class="btn btn-outline-light btn-sm">Cerrar Sesión</a>
+        </div>
+    </div>
+
+    <!-- Fila Superior: Crear Tienda y Tiendas Creadas -->
+    <div class="row">
+        <!-- Formulario de Creación de Tienda -->
+        <div class="col-lg-5">
+            <div class="card card-dashboard p-4">
+                <h4 class="fw-bold mb-3 text-dark">Crear Nueva Tienda</h4>
+                <form method="POST">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="create_store">
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Nombre de la Tienda</label>
+                        <input type="text" name="name" class="form-control" placeholder="Ej. TechStore" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Slug (URL única)</label>
+                        <input type="text" name="slug" class="form-control" placeholder="Ej. tech" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Color Principal (CSS)</label>
+                        <input type="color" name="primary_color" class="form-control form-control-color w-100" value="#0284c7">
+                    </div>
+
+                    <!-- Selección de Administrador -->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold d-block">Asignar Administrador</label>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="admin_choice" id="choiceExisting" value="existing" checked onclick="toggleAdminFields()">
+                            <label class="form-check-label" for="choiceExisting">Elegir existente</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="admin_choice" id="choiceNew" value="new" onclick="toggleAdminFields()">
+                            <label class="form-check-label" for="choiceNew">Crear nuevo admin</label>
+                        </div>
+                    </div>
+
+                    <!-- Opción 1: Seleccionar existente -->
+                    <div class="mb-3" id="existingAdminDiv">
+                        <select name="admin_id" id="adminSelect" class="form-select" required>
+                            <option value="">Selecciona un usuario admin...</option>
+                            {% for admin in store_admins %}
+                                <option value="{{ admin.id }}">{{ admin.username }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Opción 2: Crear nuevo admin -->
+                    <div id="newAdminDiv" style="display: none;">
+                        <div class="mb-3">
+                            <label class="form-label text-muted small">Nombre de Usuario del Admin</label>
+                            <input type="text" name="new_admin_username" id="newUsername" class="form-control" placeholder="Ej. admin_tech">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label text-muted small">Contraseña del Admin</label>
+                            <input type="password" name="new_admin_password" id="newPassword" class="form-control" placeholder="Contraseña segura">
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-dark w-100 fw-semibold mt-2">Crear y Configurar Tienda</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Tiendas Creadas -->
+        <div class="col-lg-7">
+            <div class="card card-dashboard p-4">
+                <h4 class="fw-bold mb-3 text-dark">Tiendas Creadas ({{ stores.count }})</h4>
+                <div class="table-container">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Tienda</th>
+                                <th>Slug</th>
+                                <th>Admin Asignado</th>
+                                <th>Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for store in stores %}
+                            <tr>
+                                <td class="fw-semibold">
+                                    <span class="d-inline-block rounded-circle me-2" style="width: 12px; height: 12px; background-color: {{ store.primary_color }};"></span>
+                                    {{ store.name }}
+                                </td>
+                                <td><code>/s/{{ store.slug }}/</code></td>
+                                <td>{{ store.admin.username }}</td>
+                                <td>
+                                    <a href="{% url 'store_front' store.slug %}" target="_blank" class="btn btn-sm btn-outline-primary">Ver Tienda</a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center text-muted py-4">No hay tiendas registradas todavía.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Fila Inferior: Admins Creados y Usuarios Registrados -->
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card card-dashboard p-4">
+                <h5 class="fw-bold mb-3">Administradores de Tienda</h5>
+                <div class="table-container">
+                    <ul class="list-group list-group-flush">
+                        {% for admin in store_admins %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <span class="fw-semibold">{{ admin.username }}</span>
+                                <small class="text-muted d-block">RUT: {{ admin.rut|default:"No registrado" }}</small>
+                            </div>
+                            <span class="badge bg-success badge-role">Admin Tienda</span>
+                        </li>
+                        {% empty %}
+                        <li class="list-group-item text-muted text-center">No hay administradores creados.</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card card-dashboard p-4">
+                <h5 class="fw-bold mb-3">Usuarios Registrados en el Sistema</h5>
+                <div class="table-container">
+                    <ul class="list-group list-group-flush">
+                        {% for user in all_users %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <span class="fw-semibold">{{ user.username }}</span>
+                                <small class="text-muted d-block">{{ user.email|default:"Sin correo" }}</small>
+                            </div>
+                            <div>
+                                {% if user.is_superuser %}
+                                    <span class="badge bg-danger badge-role">Superadmin</span>
+                                {% elif user.is_store_admin %}
+                                    <span class="badge bg-warning text-dark badge-role">Admin Tienda</span>
+                                {% else %}
+                                    <span class="badge bg-secondary badge-role">Cliente</span>
+                                {% endif %}
+                            </div>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleAdminFields() {
+    const isExisting = document.getElementById('choiceExisting').checked;
+    const existingDiv = document.getElementById('existingAdminDiv');
+    const newDiv = document.getElementById('newAdminDiv');
+    
+    const adminSelect = document.getElementById('adminSelect');
+    const newUsername = document.getElementById('newUsername');
+    const newPassword = document.getElementById('newPassword');
+
+    if (isExisting) {
+        existingDiv.style.display = 'block';
+        newDiv.style.display = 'none';
+        adminSelect.required = true;
+        newUsername.required = false;
+        newPassword.required = false;
+    } else {
+        existingDiv.style.display = 'none';
+        newDiv.style.display = 'block';
+        adminSelect.required = false;
+        newUsername.required = true;
+        newPassword.required = true;
+    }
+}
+</script>
+{% endblock %}

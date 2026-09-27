@@ -1,0 +1,216 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ store.name }} - Tienda Oficial{% endblock %}
+
+{% block content %}
+<style>
+    :root {
+        --store-primary: {{ store.primary_color|default:"#00a859" }};
+    }
+    body {
+        background-color: #f8f9fa;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    .top-utility-bar {
+        background-color: #111;
+        color: #bbb;
+        font-size: 0.85rem;
+    }
+    .top-utility-bar a {
+        color: #bbb;
+        text-decoration: none;
+        transition: color 0.2s;
+    }
+    .top-utility-bar a:hover {
+        color: #fff;
+    }
+    .main-navbar {
+        background-color: #1e293b;
+        color: white;
+    }
+    .brand-logo {
+        font-size: 1.8rem;
+        font-weight: 800;
+        letter-spacing: -1px;
+        color: white;
+        text-decoration: none;
+    }
+    .brand-logo span {
+        color: var(--store-primary);
+    }
+    .announcement-bar {
+        background-color: var(--store-primary);
+        color: white;
+        font-weight: 600;
+        font-size: 0.95rem;
+        letter-spacing: 0.5px;
+    }
+    .sidebar-filter {
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    .category-circle-card {
+        text-align: center;
+        cursor: pointer;
+        transition: transform 0.2s;
+    }
+    .category-circle-card:hover {
+        transform: translateY(-5px);
+    }
+    .circle-img-container {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        background-color: #e2fcd9;
+        border: 3px solid var(--store-primary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 10px auto;
+        color: var(--store-primary);
+        font-size: 1.5rem;
+    }
+    .btn-store {
+        background-color: var(--store-primary);
+        color: white;
+        font-weight: 600;
+        border: none;
+    }
+    .btn-store:hover {
+        background-color: #008f4c;
+        color: white;
+    }
+</style>
+
+<!-- Barra superior de utilidades -->
+<div class="top-utility-bar py-1 d-none d-md-block">
+    <div class="container d-flex justify-content-between">
+        <div>
+            <span class="me-3">📍 Tienda Oficial Multi-Tenant</span>
+            <span>Garantía y seguridad asegurada</span>
+        </div>
+        <div class="d-flex gap-4">
+    <a href="{% url 'order_history' %}">Mis compras</a>
+    {% if request.user.is_authenticated %}
+        <span class="text-light">Hola, <b>{{ request.user.username }}</b></span>
+        <a href="{% url 'logout' %}" class="text-danger">Salir</a>
+    {% else %}
+        <a href="{% url 'store_login' store.slug %}">Ingresar</a>
+        <a href="{% url 'store_register' store.slug %}">Registrarse</a>
+    {% endif %}
+</div>
+    </div>
+</div>
+
+<!-- Navbar principal -->
+<nav class="navbar navbar-expand-lg main-navbar py-3 shadow-sm">
+    <div class="container">
+        <a class="brand-logo d-flex align-items-center gap-2" href="{% url 'store_front' store.slug %}">
+            {% if store.logo %}
+                <img src="{{ store.logo.url }}" alt="{{ store.name }}" style="height: 40px; border-radius: 50%;">
+            {% endif %}
+            {{ store.name }}<span>.</span>
+        </a>
+
+        <div class="flex-grow-1 mx-4 d-none d-lg-block" style="max-width: 500px;">
+            <div class="input-group">
+                <input type="text" class="form-control" placeholder="Busca artículos en {{ store.name }}...">
+                <button class="btn btn-light" type="button">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-search" viewBox="0 0 16 16">
+                        <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001q.044.06.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <div class="d-flex align-items-center gap-3">
+            <a href="{% url 'order_history' %}" class="text-white text-decoration-none d-none md-block">Mis Compras</a>
+        </div>
+    </div>
+</nav>
+
+<!-- Franja de anuncios de la tienda -->
+<div class="announcement-bar py-2 text-center text-uppercase">
+    ⭐ Compra online con despacho rápido en <b>{{ store.name }}</b> ⭐
+</div>
+
+<div class="container my-4">
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="#" class="text-muted text-decoration-none">Home</a></li>
+            <li class="breadcrumb-item"><a href="#" class="text-muted text-decoration-none">Categorías</a></li>
+            <li class="breadcrumb-item active text-dark fw-bold" aria-current="page">{{ store.name }}</li>
+        </ol>
+    </nav>
+
+    <div class="row">
+        <!-- Sidebar Izquierdo -->
+        <div class="col-lg-3 d-none d-lg-block">
+            <div class="sidebar-filter p-3 mb-4">
+                <h6 class="fw-bold text-uppercase mb-3" style="color: var(--store-primary);">Categorías</h6>
+                <ul class="list-unstyled mb-0">
+                    <li class="py-2 border-bottom"><a href="#" class="text-dark text-decoration-none">Todos los productos</a></li>
+                    <li class="py-2 border-bottom"><a href="#" class="text-dark text-decoration-none">Más Vendidos</a></li>
+                    <li class="py-2 border-bottom"><a href="#" class="text-dark text-decoration-none">Ofertas del Mes</a></li>
+                    <li class="py-2"><a href="#" class="text-dark text-decoration-none">Novedades</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Columna Derecha -->
+        <div class="col-lg-9">
+            <div class="bg-white p-4 rounded-3 shadow-sm mb-4">
+                <h5 class="fw-bold mb-4">Explora por Categoría</h5>
+                <div class="row text-center">
+                    <div class="col-4 col-md-2 category-circle-card">
+                        <div class="circle-img-container">📦</div>
+                        <span class="small fw-semibold text-secondary">General</span>
+                    </div>
+                    <div class="col-4 col-md-2 category-circle-card">
+                        <div class="circle-img-container">🔥</div>
+                        <span class="small fw-semibold text-secondary">Destacados</span>
+                    </div>
+                    <div class="col-4 col-md-2 category-circle-card">
+                        <div class="circle-img-container">⭐</div>
+                        <span class="small fw-semibold text-secondary">Premium</span>
+                    </div>
+                    <div class="col-4 col-md-2 category-circle-card">
+                        <div class="circle-img-container">🏷️</div>
+                        <span class="small fw-semibold text-secondary">Ofertas</span>
+                    </div>
+                </div>
+            </div>
+
+            <h4 class="fw-bold mb-3">Catálogo de Productos en {{ store.name }}</h4>
+            <div class="row">
+                {% for product in products %}
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100 border-0 shadow-sm p-3 d-flex flex-column justify-content-between">
+                        <div>
+                            <div class="bg-light rounded p-4 text-center mb-3 text-muted fw-bold" style="height: 140px; display: flex; align-items: center; justify-content: center;">
+                                [ Imagen de Producto ]
+                            </div>
+                            <h5 class="fw-bold text-dark h6">{{ product.name }}</h5>
+                            <p class="text-muted small mb-2">Stock disponible: {{ product.stock }} unidades</p>
+                        </div>
+                        <div>
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <span class="fs-5 fw-bold text-dark">${{ product.price }}</span>
+                            </div>
+                            <button class="btn btn-store w-100 py-2" onclick="alert('Producto añadido al carrito de {{ store.name }}')">
+                                Añadir al Carrito
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="col-12 text-center py-5 bg-white rounded shadow-sm">
+                    <p class="text-muted mb-0">No hay productos disponibles en esta tienda actualmente.</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

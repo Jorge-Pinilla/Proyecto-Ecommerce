@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% block title %}Iniciar Sesión - {{ store.name }}{% endblock %}
+{% block content %}
+<style>
+    :root { --store-primary: {{ store.primary_color|default:"#00a859" }}; }
+    .btn-store { background-color: var(--store-primary); color: white; font-weight: 600; border: none; }
+    .btn-store:hover { background-color: #008f4c; color: white; }
+</style>
+<div class="row justify-content-center mt-5">
+    <div class="col-md-5">
+        <div class="card shadow-sm p-4 border-0 rounded-3 bg-white">
+            <h3 class="text-center fw-bold mb-3" style="color: var(--store-primary);">Ingresar a {{ store.name }}</h3>
+            <form method="post">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Correo Electrónico</label>
+                    <input type="text" name="username" class="form-control" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Contraseña</label>
+                    <input type="password" name="password" class="form-control" required>
+                </div>
+                <button type="submit" class="btn btn-store w-100 py-2 mt-2">Iniciar Sesión</button>
+            </form>
+            <div class="text-center mt-3">
+                <p class="small text-muted">¿No tienes cuenta? <a href="{% url 'store_register' store.slug %}" style="color: var(--store-primary);">Regístrate aquí</a></p>
+                <a href="{% url 'store_front' store.slug %}" class="text-secondary small">Volver a la tienda</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
